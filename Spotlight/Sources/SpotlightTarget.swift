@@ -9,7 +9,8 @@
 import Foundation
 import UIKit
 
-public enum SpotlightTarget {
+public enum SpotlightTarget: Equatable {
+    case none
     case view(UIView)
     case barButton(UIBarButtonItem)
     case tabBarItem(UITabBarController, Int)
@@ -19,6 +20,8 @@ public enum SpotlightTarget {
     var targetView: UIView {
         let target: UIView
         switch self {
+        case .none:
+            target = UIView()
         case let .view(view):
             target = view
         case let .barButton(barButtonItem):
@@ -27,7 +30,7 @@ public enum SpotlightTarget {
             let tabBarItems = tabBarController.tabBar.subviews.filter { $0.isUserInteractionEnabled }
             guard index > -1, tabBarItems.count > index else { return UIView() }
             let tabBarItemView = tabBarItems[index]
-            let frame = CGRect(x: tabBarItemView.frame.midX - 22, y: tabBarController.tabBar.frame.origin.y, width: 44, height: 44)
+            let frame = CGRect(x: tabBarItemView.frame.midX - 42, y: tabBarController.tabBar.frame.origin.y - 21, width: 84, height: 84)
             target = UIView(frame: frame)
         case let .point(center, radius):
             target = UIView(frame: CGRect(x: 0, y: 0, width: radius * 2, height: radius * 2))
@@ -40,7 +43,13 @@ public enum SpotlightTarget {
 
     func path(node: SpotlightNode, translater: UIView) -> UIBezierPath {
         let translatedFrame = targetView.convert(targetView.bounds, to: translater)
-        let spotlightFrame = translatedFrame.insetBy(dx: -8.0, dy: -8.0) // Add some breathing space for the spotlight
+        let spotlightFrame: CGRect
+        switch node.target {
+        case .none:
+            spotlightFrame = .zero
+        default:
+            spotlightFrame = translatedFrame.insetBy(dx: -8.0, dy: -8.0) // Add some breathing space for the spotlight
+        }
 
         if node.roundedCorners {
             return UIBezierPath(roundedRect: spotlightFrame, cornerRadius: spotlightFrame.height / 2.0)

@@ -14,6 +14,7 @@ final class SpotlightViewController: UIViewController {
     weak var delegate: SpotlightDelegate?
     var backButton: UIButton!
     var nextButton: UIButton!
+    var initialButton: UIButton!
 
     // MARK: - View Controller Life cycle
 
@@ -30,7 +31,8 @@ final class SpotlightViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupSpotlightView()
-        setupInfoView()
+        setupInitView()
+        setupInfoView(load: Spotlight.hasInitView ? false : true)
         setupTapGestureRecognizer()
     }
 
@@ -44,9 +46,35 @@ final class SpotlightViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        nextSpotlight()
 
-        timer = Timer.scheduledTimer(timeInterval: Spotlight.delay, target: self, selector: #selector(nextSpotlight), userInfo: nil, repeats: true)
+        self.nextSpotlight()
+        
+        UIView.animate(withDuration: 0.5) { [weak self] in
+            guard let self = self else { return }
+            
+            if Spotlight.hasInitView == false {
+                self.infoStackBottomConstraint.constant = -44
+            }
+            self.spotlightView.backgroundColor = Spotlight.backgroundColor
+            
+            self.view.layoutIfNeeded()
+        }
+        
+        Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(setupSpotlightDelay), userInfo: nil, repeats: false)
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        Spotlight.infoBackgroundGradient?.frame = infoStackView.bounds
+        Spotlight.infoBackgroundGradient?.removeAllAnimations()
+    }
+    
+    @objc
+    private func setupSpotlightDelay() {
+        if Spotlight.delay > 0 {
+            self.timer = Timer.scheduledTimer(timeInterval: Spotlight.delay, target: self, selector: #selector(self.nextSpotlight), userInfo: nil, repeats: true)
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -59,16 +87,21 @@ final class SpotlightViewController: UIViewController {
         super.viewWillTransition(to: size, with: coordinator)
         // Redraw spotlight for the new dimention
         spotlightView.frame = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-        showSpotlight()
+        goToSpotlight(index: currentNodeIndex > 0 ? currentNodeIndex : 0)
     }
 
     let spotlightView = SpotlightView()
+    var titleLabel: UILabel!
     var infoLabel: UILabel!
     var infoStackView: UIStackView!
     var infoStackTopConstraint: NSLayoutConstraint!
     var infoStackBottomConstraint: NSLayoutConstraint!
     fileprivate var timer = Timer()
     fileprivate var currentNodeIndex: Int = -1
+    
+    var initStackView: UIStackView!
+    var initStackTopConstraint: NSLayoutConstraint!
+    var initStackBottomConstraint: NSLayoutConstraint!
 }
 
 // MARK: - User Actions
@@ -82,6 +115,8 @@ extension SpotlightViewController {
             nextSpotlight()
         case Spotlight.backButtonTitle:
             previousSpotlight()
+        case Spotlight.initialButtonTitle:
+            nextSpotlight()
         default:
             dismissSpotlight()
         }
@@ -97,8 +132,15 @@ extension SpotlightViewController {
             dismissSpotlight()
             return
         }
-        currentNodeIndex += 1
-        showSpotlight()
+        if Spotlight.hasInitView == true, currentNodeIndex == -1 {
+            print("DEBUG: first")
+            goToInitialSpotlight()
+        } else if Spotlight.hasInitView == true, currentNodeIndex == 0 {
+            loadInfoView()
+            goToSpotlight(index: currentNodeIndex + 1)
+        } else {
+            goToSpotlight(index: currentNodeIndex + 1)
+        }
     }
 
     func previousSpotlight() {
@@ -106,29 +148,42 @@ extension SpotlightViewController {
             dismissSpotlight()
             return
         }
-        currentNodeIndex -= 1
-        showSpotlight()
+        goToSpotlight(index: currentNodeIndex - 1)
+    }
+    
+    private func goToInitialSpotlight() {
+        currentNodeIndex = 0
+        let node = spotlightNodes[currentNodeIndex]
+        
+        initialButton.isHidden = false
+        titleLabel.text = node.title
+        infoLabel.text = node.text
+        
+        delegate?.spotlightDidAdvance(to: 1, of: spotlightNodes.count)
+        view.layoutIfNeeded()
     }
 
-    func showSpotlight() {
+    private func goToSpotlight(index: Int) {
+        let previousNodeIndex = currentNodeIndex
+        currentNodeIndex = index
+        let previousTarget = previousNodeIndex >= 0 && previousNodeIndex < spotlightNodes.count ? spotlightNodes[previousNodeIndex].target : SpotlightTarget.none
         let node = spotlightNodes[currentNodeIndex]
 
         nextButton.isHidden = (currentNodeIndex == spotlightNodes.count - 1)
-        backButton.isHidden = (currentNodeIndex == 0)
+        backButton.isHidden = (currentNodeIndex == 0 || (currentNodeIndex == 1 && Spotlight.hasInitView == true))
 
         let targetRect: CGRect
-        switch currentNodeIndex {
-        case 0:
+        if previousTarget == .none {
             targetRect = spotlightView.appear(node)
-        case let index where index == spotlightNodes.count:
+        } else if node.target == .none {
             targetRect = spotlightView.disappear(node)
-        default:
+        } else {
             targetRect = spotlightView.move(node)
         }
 
         let newNodeIndex = currentNodeIndex + 1
-        delegate?.didAdvance(to: newNodeIndex, of: spotlightNodes.count)
-
+        delegate?.spotlightDidAdvance(to: newNodeIndex, of: spotlightNodes.count)
+        titleLabel.text = node.title
         infoLabel.text = node.text
 
         // Animate the info box around if intersects with spotlight
@@ -150,6 +205,6 @@ extension SpotlightViewController {
 
     func dismissSpotlight() {
         dismiss(animated: true, completion: nil)
-        delegate?.didDismiss()
+        delegate?.spotlightDidDismiss()
     }
 }
