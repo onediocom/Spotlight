@@ -133,7 +133,6 @@ extension SpotlightViewController {
             return
         }
         if Spotlight.hasInitView == true, currentNodeIndex == -1 {
-            print("DEBUG: first")
             goToInitialSpotlight()
         } else if Spotlight.hasInitView == true, currentNodeIndex == 0 {
             loadInfoView()

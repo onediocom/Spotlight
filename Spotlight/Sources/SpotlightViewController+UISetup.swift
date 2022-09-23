@@ -125,14 +125,12 @@ extension SpotlightViewController {
     
     func loadInfoView() {
         if let viewWithTag = self.view.viewWithTag(100) {
-            print("DEBUG: Tag 100")
             viewWithTag.removeFromSuperview()
         } else {
             print("DEBUG: tag not found")
         }
         
         if let viewWithTag = self.view.viewWithTag(101) {
-            print("DEBUG: Tag 101")
             viewWithTag.removeFromSuperview()
         } else {
             print("DEBUG: tag not found")

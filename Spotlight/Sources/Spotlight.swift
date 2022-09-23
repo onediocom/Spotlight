@@ -14,11 +14,6 @@ public protocol SpotlightDelegate: AnyObject {
     func spotlightDidDismiss()
 }
 
-public extension SpotlightDelegate {
-    func spotlightDidAdvance(to node: Int, of total: Int) {}
-    func spotlightDidDismiss() {}
-}
-
 public final class Spotlight {
     public static var delay: TimeInterval = 3.0
     public static var animationDuration: TimeInterval = 0.25
