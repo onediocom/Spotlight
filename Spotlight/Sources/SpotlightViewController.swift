@@ -15,6 +15,7 @@ final class SpotlightViewController: UIViewController {
     var backButton: UIButton!
     var nextButton: UIButton!
     var initialButton: UIButton!
+    var finishButton: UIButton!
 
     // MARK: - View Controller Life cycle
 
@@ -41,6 +42,7 @@ final class SpotlightViewController: UIViewController {
         if spotlightNodes.count == 1 {
             backButton.isHidden = true
             nextButton.isHidden = true
+            finishButton.isHidden = true
         }
     }
 
@@ -170,6 +172,8 @@ extension SpotlightViewController {
 
         nextButton.isHidden = (currentNodeIndex == spotlightNodes.count - 1)
         backButton.isHidden = (currentNodeIndex == 0 || (currentNodeIndex == 1 && Spotlight.hasInitView == true))
+        print("DEBUG: current: \(currentNodeIndex), \(spotlightNodes.count - 1)")
+        finishButton.isHidden = (currentNodeIndex != spotlightNodes.count - (Spotlight.hasInitView ? 1  : 0))
 
         let targetRect: CGRect
         if previousTarget == .none {

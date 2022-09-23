@@ -82,7 +82,11 @@ extension SpotlightViewController {
         backButton.isHidden = true // Will be shown later
         nextButton = createButton()
         nextButton.setTitle(Spotlight.nextButtonTitle, for: .normal)
-        let buttonsStack = UIStackView(arrangedSubviews: [backButton, createSpacer(), nextButton])
+        
+        finishButton = createButton()
+        finishButton.setTitle(Spotlight.finishButtonTitle, for: .normal)
+        finishButton.isHidden = true
+        let buttonsStack = UIStackView(arrangedSubviews: [backButton, createSpacer(), nextButton, finishButton])
         buttonsStack.axis = .horizontal
 
         titleLabel = createTitleLabel()

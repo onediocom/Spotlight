@@ -27,6 +27,7 @@ public final class Spotlight {
     public static var backButtonTitle = "Back"
     public static var nextButtonTitle = "Next"
     public static var initialButtonTitle = "Continue"
+    public static var finishButtonTitle = "Finish"
     public static var hasInitView = false
 
     public weak var delegate: SpotlightDelegate?
